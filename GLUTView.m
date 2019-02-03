@@ -62,7 +62,7 @@ static GLUTView *	__glutVisibilityUpdateTail = NULL;
       [self setAutoresizingMask: (NSViewHeightSizable | NSViewWidthSizable)];
       [self setAutoresizesSubviews: NO];
       [self setPostsBoundsChangedNotifications: NO];
-      [self setPostsFrameChangedNotifications: NO];
+      [self setPostsFrameChangedNotifications: YES];
       [self allocateGState];	// make -lockFocus 2x faster...
       
       /* This list contains ALL subviews of a GLUTView including
@@ -96,7 +96,7 @@ static GLUTView *	__glutVisibilityUpdateTail = NULL;
 	  else
 		_isVBLSync = 0;
 
-      [[self openGLContext] makeCurrentContext]; 
+      [[self openGLContext] makeCurrentContext];
       if(_flags.treatAsSingle) {
          /* We do this because either the window really is single
             buffered (in which case this is redundant, but harmless,
@@ -112,6 +112,7 @@ static GLUTView *	__glutVisibilityUpdateTail = NULL;
 	  [[self openGLContext] setValues:&_isVBLSync forParameter:NSOpenGLCPSwapInterval];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_surfaceNeedsUpdate:) name:NSViewGlobalFrameDidChangeNotification object:self];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(_surfaceNeedsUpdate:) name:NSViewFrameDidChangeNotification object:self];
 
       return self;
    }
