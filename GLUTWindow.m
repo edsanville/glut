@@ -109,10 +109,12 @@ static NSArray *	gServicesTypes = nil;
    if([view respondsToSelector:@selector(wantsBestResolutionOpenGLSurface)]) {
       if([view wantsBestResolutionOpenGLSurface]) {
          rect = [view convertRectFromBacking: rect];
+          rect.origin = CGPointZero;
       }
    }
-   if(view)
-      return [self _initWithContentRect: rect styleMask: mask contentView: view];
+    if(view) {
+        return [self _initWithContentRect: rect styleMask: mask contentView: view];
+    }
    else
       return nil;
 }

@@ -313,7 +313,12 @@ static GLUTView *	__glutVisibilityUpdateTail = NULL;
 	/* Return window size in local coordinates. */
 - (NSSize)windowSize
 {
-	return [self convertSizeToBacking: [self bounds].size];
+    if (self.wantsBestResolutionOpenGLSurface) {
+        return [self convertSizeToBacking: [self bounds].size];
+    }
+    else {
+        return self.bounds.size;
+    }
 }
 
 - (int)visibilityState

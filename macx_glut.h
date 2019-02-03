@@ -175,7 +175,7 @@ typedef struct _Criterion
 
 typedef struct _DisplayMode
 {
-   CFDictionaryRef	cgModeDict;	/* weak ref */
+   CGDisplayModeRef	cgMode;	/* weak ref */
    int					valid;
    int					cap[NUM_DM_CAPS];
 } DisplayMode;

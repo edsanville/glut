@@ -22,7 +22,7 @@ static CFDictionaryRef		gOriginalMode = NULL;
 static BOOL					gIsLimitedMode = NO;
 static int					gSavedDefaultColorSize;
 
-
+#define USE_GLUT_DSPY_MATCH_SCHEME 1
 
 #ifdef TEST
 static char *compstr[] =
@@ -34,6 +34,12 @@ static char *capstr[] =
   "width", "height", "bpp", "hertz", "num"
 };
 #endif
+
+// Because Apple doesn't have a function to get this, for some reason...
+NSUInteger CGDisplayModeGetBitsPerPixel(CGDisplayModeRef displayMode) {
+    CFStringRef encoding = CGDisplayModeCopyPixelEncoding(displayMode);
+    return CFStringGetLength(encoding);
+}
 
 short __glutGetCurrentDMDepth (void)
 {
@@ -90,28 +96,6 @@ void __glutCloseDownGameMode(void)
    }
 }
 
-static int _getDictInt (CFDictionaryRef refDict, CFStringRef key)
-{
-	int int_value;
-	CFNumberRef number_value = (CFNumberRef) CFDictionaryGetValue(refDict, key);
-	if (!number_value) // if can't get a number for the dictionary
-		return -1;  // fail
-	if (!CFNumberGetValue(number_value, kCFNumberIntType, &int_value)) // or if cant convert it
-		return -1; // fail
-	return int_value; // otherwise return the int value
-}
-
-static double _getDictDouble (CFDictionaryRef refDict, CFStringRef key)
-{
-	double double_value;
-	CFNumberRef number_value = (CFNumberRef) CFDictionaryGetValue(refDict, key);
-	if (!number_value) // if can't get a number for the dictionary
-		return -1;  // fail
-	if (!CFNumberGetValue(number_value, kCFNumberDoubleType, &double_value)) // or if cant convert it
-		return -1; // fail
-	return double_value; // otherwise return the int value
-}
-
 #define MIN_WIDTH 640
 #define MIN_HEIGHT 480
 #define MIN_FREQUENCY 0 /* account for flat panels */
@@ -136,19 +120,20 @@ static void initGameModeSupport(void)
    }
    
    /* Determine how many display modes there are. */
-   displayModes = CGDisplayAvailableModes(kCGDirectMainDisplay);
-   count = CFArrayGetCount(displayModes);
-   ndmodes = 0; // must set to zero otherwise allocate too little storage
-   for(i = 0; i < count; i++) {
-      CFDictionaryRef	modeDict = CFArrayGetValueAtIndex(displayModes, i);      
-      long width = _getDictInt (modeDict, kCGDisplayWidth);
-      long height = _getDictInt (modeDict, kCGDisplayHeight);
-      long freq = (int)(_getDictDouble (modeDict, kCGDisplayRefreshRate) + 0.5);
-      long depth = _getDictInt (modeDict, kCGDisplayBitsPerPixel);
+    CGDirectDisplayID mainDisplay = CGMainDisplayID();
+    displayModes = CGDisplayCopyAllDisplayModes(mainDisplay, NULL);
+    count = CFArrayGetCount(displayModes);
+    ndmodes = 0; // must set to zero otherwise allocate too little storage
+    for(i = 0; i < count; i++) {
+        CGDisplayModeRef displayMode = (CGDisplayModeRef) CFArrayGetValueAtIndex(displayModes, i);
+        long width = CGDisplayModeGetPixelWidth(displayMode);
+        long height = CGDisplayModeGetPixelHeight(displayMode);
+        long freq = CGDisplayModeGetRefreshRate(displayMode);
+        long depth = CGDisplayModeGetBitsPerPixel(displayMode);
       
       if ((width >= MIN_WIDTH) && (height >= MIN_HEIGHT) && (freq >= MIN_FREQUENCY) && (depth >= MIN_PIXEL_DEPTH))
          ndmodes++;
-   }
+    }
    
    /* Allocate memory for a list of all the display modes. */
    dmodes = (DisplayMode *) malloc(ndmodes * sizeof(DisplayMode));
@@ -157,23 +142,23 @@ static void initGameModeSupport(void)
       enumerate them again and save the information in
       the list we allocated above. */
    for(i = 0, j = 0; i < count; i++) {
-      CFDictionaryRef	modeDict = CFArrayGetValueAtIndex(displayModes, i);
-      int displayWidth = _getDictInt (modeDict, kCGDisplayWidth);
-      int displayHeight = _getDictInt (modeDict, kCGDisplayHeight);
-      int displayFreq = (int)(_getDictDouble (modeDict, kCGDisplayRefreshRate) + 0.5);
-      int bitsPerPixel = _getDictInt (modeDict, kCGDisplayBitsPerPixel);
-      
+       CGDisplayModeRef displayMode = (CGDisplayModeRef) CFArrayGetValueAtIndex(displayModes, i);
+       long width = CGDisplayModeGetPixelWidth(displayMode);
+       long height = CGDisplayModeGetPixelHeight(displayMode);
+       long freq = CGDisplayModeGetRefreshRate(displayMode);
+       long depth = CGDisplayModeGetBitsPerPixel(displayMode);
+
       /* Try to reject any display settings that seem unplausible. */
-      if(displayWidth >= MIN_WIDTH &&
-         displayHeight >= MIN_HEIGHT &&
-         displayFreq >= MIN_FREQUENCY &&
-         bitsPerPixel >= MIN_PIXEL_DEPTH) {
-         dmodes[j].cgModeDict = modeDict;
+      if(width >= MIN_WIDTH &&
+         width >= MIN_HEIGHT &&
+         freq >= MIN_FREQUENCY &&
+         depth >= MIN_PIXEL_DEPTH) {
+         dmodes[j].cgMode = displayMode;
          dmodes[j].valid = 1;  /* XXX Not used for now. */
-         dmodes[j].cap[DM_WIDTH] = displayWidth;
-         dmodes[j].cap[DM_HEIGHT] = displayHeight;
-         dmodes[j].cap[DM_PIXEL_DEPTH] = bitsPerPixel;
-         dmodes[j].cap[DM_HERTZ] = displayFreq;
+         dmodes[j].cap[DM_WIDTH] = width;
+         dmodes[j].cap[DM_HEIGHT] = height;
+         dmodes[j].cap[DM_PIXEL_DEPTH] = depth;
+         dmodes[j].cap[DM_HERTZ] = freq;
          j++;
       }
    }
@@ -184,23 +169,26 @@ static void initGameModeSupport(void)
    CG display mode */
 static void initLimitedGameModeSupport(void)
 {
-   CFDictionaryRef	modeDict = CGDisplayCurrentMode(kCGDirectMainDisplay);
-   
-   if(ndmodes >= 0) {
+    CGDirectDisplayID displayID = CGMainDisplayID();
+    CGDisplayModeRef displayMode = CGDisplayCopyDisplayMode(displayID);
+    
+    if(ndmodes >= 0) {
       /* ndmodes is initially -1 to indicate no dmodes allocated yet. */
       return;
-   }
+    }
    
-   /* Allocate memory for a single display mode. */
-   dmodes = (DisplayMode *) malloc(sizeof(DisplayMode));
+    /* Allocate memory for a single display mode. */
+    dmodes = (DisplayMode *) malloc(sizeof(DisplayMode));
    
-   dmodes[0].cgModeDict = modeDict;
-	dmodes[0].valid = 1;  /* XXX Not used for now. */
-   dmodes[0].cap[DM_WIDTH] = _getDictInt(modeDict, kCGDisplayWidth);
-   dmodes[0].cap[DM_HEIGHT] = _getDictInt(modeDict, kCGDisplayHeight);
-   dmodes[0].cap[DM_PIXEL_DEPTH] = (int)(_getDictDouble (modeDict, kCGDisplayRefreshRate) + 0.5);
-   dmodes[0].cap[DM_HERTZ] = _getDictInt(modeDict, kCGDisplayRefreshRate);
-   gIsLimitedMode = YES;
+    dmodes[0].cgMode = displayMode;
+    dmodes[0].valid = 1;  /* XXX Not used for now. */
+    dmodes[0].cap[DM_WIDTH] = CGDisplayModeGetPixelWidth(displayMode);
+    dmodes[0].cap[DM_HEIGHT] = CGDisplayModeGetPixelHeight(displayMode);
+    //    dmodes[0].cap[DM_PIXEL_DEPTH] = (int)(_getDictDouble (modeDict, kCGDisplayRefreshRate) + 0.5);
+    // ???
+    dmodes[0].cap[DM_PIXEL_DEPTH] = CGDisplayModeGetBitsPerPixel(displayMode);
+    dmodes[0].cap[DM_HERTZ] = CGDisplayModeGetRefreshRate(displayMode);
+    gIsLimitedMode = YES;
 }
 
 /* This routine is based on similiar code in glut_dstr.c */
@@ -712,11 +700,18 @@ int APIENTRY glutEnterGameMode(void)
 			gOriginalMode = CGDisplayCurrentMode(kCGDirectMainDisplay);
 		}
       
-		status = CGDisplaySwitchToMode(kCGDirectMainDisplay, currentDm->cgModeDict);
+        status = CGDisplaySetDisplayMode(CGMainDisplayID(), currentDm->cgMode, NULL);
 		if(status == kCGErrorSuccess) {
 			__glutDisplaySettingsChanged = 1;
-			width = currentDm->cap[DM_WIDTH];
-			height = currentDm->cap[DM_HEIGHT];
+            if (__glutDisplayString &&
+                strstr(__glutDisplayString, "hidpi") != NULL) {
+              width = currentDm->cap[DM_WIDTH];
+              height = currentDm->cap[DM_HEIGHT];
+            }
+            else {
+                width = CGDisplayModeGetWidth(currentDm->cgMode);
+                height = CGDisplayModeGetHeight(currentDm->cgMode);
+            }
 		} else {
 			/* Switch back to default resolution. */
 			__glutWarning("Could not enter game mode (%d)", status);
