@@ -15,7 +15,7 @@
    (mitchell@cam.nist.gov) in developing this friend interface
    for use by the f90gl package.  See ../../README.fortran */
 
-#include <GLUT/glut.h>
+#include <glut/glut.h>
 
 #ifndef GLUTCALLBACK
 	#define GLUTCALLBACK

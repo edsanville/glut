@@ -9,10 +9,6 @@
 #import "macx_glut.h"
 #import "GLUTApplication.h"
 
-#if defined(__LP64__)
-#import <QTKit/QTMovie.h>
-#import <QTKit/QTMovieView.h>
-#endif // #if defined(__LP64__)
 
 
 @interface GLUTUnknownView : NSView
@@ -211,29 +207,7 @@
 - (void)_getMovieView: (NSView **)aMovieView description: (NSString **)aDesc
             fromPasteboard: (NSPasteboard *)pboard type: (NSString *)type
 {
-#if defined(__LP64__)
-	QTMovie			*myMovie	= [QTMovie movieWithPasteboard: pboard error: nil];
-	QTMovieView		*myMovieView = nil;
-
-	myMovieView = [[[QTMovieView alloc] initWithFrame: NSMakeRect(0.0, 0.0, 10.0, 10.0)] autorelease];
    
-	[myMovieView setMovie: myMovie];
-	[myMovieView setEditable: NO];
-#else
-   NSMovie *		myMovie = [[[NSMovie alloc] initWithPasteboard: pboard] autorelease];
-   NSMovieView *	myMovieView = nil;
-   
-   myMovieView = [[[NSMovieView alloc] initWithFrame: NSMakeRect(0.0, 0.0, 10.0, 10.0)] autorelease];
-   
-   [myMovieView setMovie: myMovie];
-   [myMovieView setEditable: NO];
-#endif // #if defined(__LP64__)
-   
-	*aMovieView = myMovieView;
-
-	*aDesc = NSLocalizedStringFromTableInBundle(@"Movie", @"GLUTUI",
-                              __glutGetFrameworkBundle(),
-                              @"Movie");
 }
 
 - (void)_getUnknownView: (NSView **)aView description: (NSString **)aDesc
@@ -264,12 +238,6 @@
    }
 
    if(pboardView == nil) {
-         /* Knock, knock, QT movie there ? */
-#if defined(__LP64__)
-      type = [pboard availableTypeFromArray: [QTMovie movieUnfilteredPasteboardTypes]];
-#else 
-      type = [pboard availableTypeFromArray: [NSMovie movieUnfilteredPasteboardTypes]];
-#endif // #if defined(__LP64__)
 
       if(type) {
          [self _getMovieView: &pboardView description: &pboardDesc fromPasteboard: pboard type: type];

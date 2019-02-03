@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		8DC2EF510486A6940098B216 /* GLUT_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32DBCF5E0370ADEE00C91783 /* GLUT_Prefix.pch */; };
 		8DC2EF530486A6940098B216 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
-		8E409B930BCC4D5D0079132C /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8DC2EF5A0486A6940098B216 /* Info.plist */; };
 		8E5A3ED60BCD4FEE00D0AF36 /* libForeground.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8E5A3ED50BCD4FEE00D0AF36 /* libForeground.a */; };
 		8E6D26EC05ED0E8500AF4925 /* GLUTWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E6D26E505ED0E8500AF4925 /* GLUTWindow.m */; };
 		8E6D26ED05ED0E8500AF4925 /* GLUTView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8E6D26E605ED0E8500AF4925 /* GLUTView.m */; };
@@ -238,7 +237,7 @@
 		8E6D276905ED102900AF4925 /* glut_roman.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = glut_roman.c; sourceTree = "<group>"; };
 		8E6D276A05ED102900AF4925 /* glut_shapes.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = glut_shapes.c; sourceTree = "<group>"; };
 		8E6D278305ED10DE00AF4925 /* Caution.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = Caution.tiff; sourceTree = "<group>"; };
-		8E6D278605ED10FC00AF4925 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/GLUTUI.strings; sourceTree = "<group>"; };
+		8E6D278605ED10FC00AF4925 /* English */ = {isa = PBXFileReference; fileEncoding = 2415919360; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/GLUTUI.strings; sourceTree = "<group>"; };
 		8E6D278905ED110900AF4925 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/GLUTPreferences.nib; sourceTree = "<group>"; };
 		8E6D278B05ED110900AF4925 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/GLUT.nib; sourceTree = "<group>"; };
 		8E6D278D05ED110900AF4925 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/GLUTClipboard.nib; sourceTree = "<group>"; };
@@ -763,7 +762,6 @@
 				8E6D27B505ED111B00AF4925 /* toprightCursor.tiff in Resources */,
 				8E6D27B605ED111B00AF4925 /* upDownCursor.tiff in Resources */,
 				8E6D27B705ED111B00AF4925 /* waitCursor.tiff in Resources */,
-				8E409B930BCC4D5D0079132C /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -919,12 +917,7 @@
 		8E72875A0BCC070B00E1A77A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc7400,
-					ppc64,
-					i386,
-					x86_64,
-				);
+				ARCHS = "$(ARCHS_STANDARD)";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_DEBUGGING_SYMBOLS = full;
@@ -966,18 +959,14 @@
 					"-Werror",
 				);
 				STRIP_INSTALLED_PRODUCT = NO;
+				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
 		8E72875B0BCC070B00E1A77A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc7400,
-					ppc64,
-					i386,
-					x86_64,
-				);
+				ARCHS = "$(ARCHS_STANDARD)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = NO;
 				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = NO;
@@ -1015,6 +1004,7 @@
 					"-Wall",
 					"-Werror",
 				);
+				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};
@@ -1044,6 +1034,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)\"";
 				LIBRARY_STYLE = Dynamic;
 				MACH_O_TYPE = mh_dylib;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = (
 					"-seg1addr",
 					3E000000,
@@ -1085,6 +1076,7 @@
 				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)\"";
 				LIBRARY_STYLE = Dynamic;
 				MACH_O_TYPE = mh_dylib;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = (
 					"-seg1addr",
 					3E000000,
